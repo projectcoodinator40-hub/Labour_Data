@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DPR System</title>
+
+<!-- Excel Library -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+body {
+  font-family: Arial;
+  background: #f2f2f2;
+  padding: 8px;
+}
+h3 {
+  text-align: center;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+th, td {
+  border: 1px solid #aaa;
+  padding: 4px;
+  font-size: 11px;
+}
+th {
+  background: #e6e6e6;
+}
+input, textarea {
+  width: 100%;
+  border: none;
+  font-size: 11px;
+  background: transparent;
+}
+button {
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  font-size: 14px;
+  border: none;
+  color: white;
+}
+.save { background: #007bff; }
+.excel { background: #28a745; }
+.clear { background: #dc3545; }
+</style>
+</head>
+
+<body>
+
+<h3>Daily Progress Report</h3>
+
+<table id="dprTable">
+<thead>
+<tr>
+  <th>S.No</th>
+  <th>Date</th>
+  <th>Site Name</th>
+  <th>Block Name</th>
+  <th>Work Description</th>
+  <th>Contractor</th>
+  <th>Skilled</th>
+  <th>Helper</th>
+  <th>Coolie</th>
+  <th>Unskilled</th>
+  <th>Remarks</th>
+</tr>
+</thead>
+
+<tbody>
+<script>
+for (let i = 1; i <= 20; i++) {
+  document.write(`
+  <tr>
+    <td>${i}</td>
+    <td><input type="date"></td>
+    <td><input placeholder="Site"></td>
+    <td><input placeholder="Block"></td>
+    <td><input placeholder="Work"></td>
+    <td><input placeholder="Contractor"></td>
+    <td><input type="number"></td>
+    <td><input type="number"></td>
+    <td><input type="number"></td>
+    <td><input type="number"></td>
+    <td><textarea></textarea></td>
+  </tr>
+  `);
+}
+</script>
+</tbody>
+</table>
+
+<button class="save" onclick="sendToGoogleSheets()">☁️ Save to Cloud</button>
+<button class="excel" onclick="exportToExcel()">📊 Download Excel</button>
+<button class="clear" onclick="clearForm()">🧹 Clear Form</button>
+
+<script>
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwCjCeblunGRWSlGTwkfO5I_HfHlcLEcZ4Tp3hYjbEwt-ahba02SNS9X8tHmhqk7iqY/exec";
+// SEND TO GOOGLE SHEETS
+function sendToGoogleSheets() {
+  const rows = document.querySelectorAll("#dprTable tbody tr");
+
+  let allData = [];
+
+  rows.forEach(row => {
+    const inputs = row.querySelectorAll("input, textarea");
+
+    if (
+      inputs[0].value ||
+      inputs[1].value ||
+      inputs[2].value ||
+      inputs[3].value
+    ) {
+      allData.push({
+        date: inputs[0].value,
+        site: inputs[1].value,
+        block: inputs[2].value,
+        work: inputs[3].value,
+        contractor: inputs[4].value,
+        skilled: inputs[5].value,
+        helper: inputs[6].value,
+        coolie: inputs[7].value,
+        unskilled: inputs[8].value,
+        remarks: inputs[9].value
+      });
+    }
+  });
+
+  fetch(WEB_APP_URL, {
+    method: "POST",
+    body: JSON.stringify(allData)
+  })
+  .then(() => alert("✅ All data saved (no rows missed)"))
+  .catch(() => alert("❌ Error sending data"));
+}
+
+// EXPORT TO EXCEL
+function exportToExcel() {
+  let rows = document.querySelectorAll("#dprTable tbody tr");
+  let data = [];
+
+  data.push([
+    "Date","Site","Block","Work","Contractor",
+    "Skilled","Helper","Coolie","Unskilled","Remarks"
+  ]);
+
+  rows.forEach(row => {
+    let inputs = row.querySelectorAll("input, textarea");
+
+    if (inputs[0].value) {
+      data.push([
+        inputs[0].value,
+        inputs[1].value,
+        inputs[2].value,
+        inputs[3].value,
+        inputs[4].value,
+        inputs[5].value,
+        inputs[6].value,
+        inputs[7].value,
+        inputs[8].value,
+        inputs[9].value
+      ]);
+    }
+  });
+
+  let wb = XLSX.utils.book_new();
+  let ws = XLSX.utils.aoa_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, "DPR");
+  XLSX.writeFile(wb, "DPR_Report.xlsx");
+}
+
+// CLEAR FORM
+function clearForm() {
+  document.querySelectorAll("input, textarea").forEach(el => el.value = "");
+}
+</script>
+
+</body>
+</html>
